@@ -16,9 +16,9 @@
 # cd tomcat
 # cd webapps
 # rm -rf *
-# wget https://github.com/carreerit/cogito/raw/master/appstack/student.war
+# wget https://github.com/devops2k18/DevOpsDecember/raw/master/APPSTACK/student.war
 # cd ../lib
-# wget https://github.com/carreerit/cogito/raw/master/appstack/mysql-connector-java-5.1.40.jar
+# wget https://github.com/devops2k18/DevOpsDecember/raw/master/APPSTACK/mysql-connector-java-5.1.40.jar
 # cd ../bin
 # sh startup.sh
 ```
