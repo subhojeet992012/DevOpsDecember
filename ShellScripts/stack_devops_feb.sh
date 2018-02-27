@@ -46,7 +46,7 @@ systemctl restart httpd &>>$LOG
 
 VALIDATE $? "Restarting Web Server"
 
-yum install gcc httpd-devel -y &>>$LOG
+yum install gcc httpd-devel java -y &>>$LOG
 VALIDATE $? "Installing GCC and httpd-devel"
 
 if [ -f /opt/$CONN_TAR_FILE ]; then
