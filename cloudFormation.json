@@ -1,0 +1,191 @@
+{
+
+	"Parameters" : {
+
+		"KeyName": {
+	      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+	      "Type": "AWS::EC2::KeyPair::KeyName",
+	      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    	},
+
+		"InstanceType" : {
+	      "Description" : "WebServer EC2 instance type",
+	      "Type" : "String",
+	      "Default" : "t2.small",
+	      "AllowedValues" : [ "t2.micro", "t2.small"],
+	      "ConstraintDescription" : "must be a valid EC2 instance type."
+    	},
+
+    	"EnvType" : {
+    		"Description" : "environement type",
+    		"Type" : "String",
+    		"AllowedValues" : ["prod", "test"],
+    		"ConstraintDescription" : "You must select the environement"
+    	}
+
+
+	},
+
+	"Mappings" : {
+		"AWSRegionArch2AMI" : {
+			"us-east-1"        : {"PV64" : "ami-26ebbc5c"},
+        	"us-west-2"        : {"PV64" : "ami-7f77b31f"}
+        }
+	},
+
+	"Conditions" : {
+    	"CreateProdResources" : {"Fn::Equals" : [{"Ref" : "EnvType"}, "prod"]},
+    	"CreateTestResources" : {"Fn::Equals" : [{"Ref" : "EnvType"}, "test"]}
+  	},
+
+	"Resources" : {
+
+	 	"VPC" : {
+	      "Type" : "AWS::EC2::VPC",
+	      "Properties" : {
+	        "CidrBlock" : "10.0.0.0/22",
+	        "Tags" : [ {"Key" : "Name", "Value" : "student-vpc" } ]
+	      }
+    	},
+
+
+    	"StudentSubnetPublic" : {
+	      "Type" : "AWS::EC2::Subnet",
+	      "Properties" : {
+	        "VpcId" : { "Ref" : "VPC" },
+	        "AvailabilityZone" : "us-east-1a",
+	        "CidrBlock" : "10.0.1.0/24",
+	        "Tags" : [ {"Key" : "Name", "Value" : "student-1a-public" } ]
+	      }
+    	},
+
+
+    	"StudentSubnetPrivate" : {
+	      "Type" : "AWS::EC2::Subnet",
+	      "Properties" : {
+	        "VpcId" : { "Ref" : "VPC" },
+	        "AvailabilityZone" : "us-east-1a",
+	        "CidrBlock" : "10.0.2.0/24",
+	        "Tags" : [ {"Key" : "Name", "Value" : "student-1a-private" } ]
+	      }
+    	},
+
+    	"InternetGateway" : {
+	      "Type" : "AWS::EC2::InternetGateway",
+	      "Properties" : {
+	        "Tags" : [ {"Key" : "Name", "Value" : "student-igw" } ]
+	      }
+    	},
+
+    	"AttachGateway" : {
+	       "Type" : "AWS::EC2::VPCGatewayAttachment",
+	       "Properties" : {
+	         "VpcId" : { "Ref" : "VPC" },
+	         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+	       }
+    	},
+
+    	"RouteTable" : {
+	      	"Type" : "AWS::EC2::RouteTable",
+	      	"Properties" : {
+		        "VpcId" : {"Ref" : "VPC"},
+		        "Tags" : [ {"Key" : "Name", "Value" : "public-route" } ]
+      		}
+    	},
+
+	    "Route" : {
+		      "Type" : "AWS::EC2::Route",
+		      "DependsOn" : "AttachGateway",
+		      "Properties" : {
+		        "RouteTableId" : { "Ref" : "RouteTable" },
+		        "DestinationCidrBlock" : "0.0.0.0/0",
+		        "GatewayId" : { "Ref" : "InternetGateway" }
+		      }
+	    },
+
+
+	    "SubnetRouteTableAssociation" : {
+	      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+	      "Properties" : {
+	        "SubnetId" : { "Ref" : "StudentSubnetPublic" },
+	        "RouteTableId" : { "Ref" : "RouteTable" }
+	      }
+    	},
+
+
+    	"InstanceSecurityGroup" : {
+		      "Type" : "AWS::EC2::SecurityGroup",
+		      "Properties" : {
+		        "VpcId" : { "Ref" : "VPC" },
+		        "GroupDescription" : "Enable SSH access via port 22",
+		        "SecurityGroupIngress" : [
+		          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0"},
+		          { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"}
+		         ]
+		      }
+    	},
+
+    	"Ec2InstanceProd" : {
+			  "Type" : "AWS::EC2::Instance",
+			  "Condition" : "CreateProdResources",
+			  "Properties" : {
+			    "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },"PV64"]},
+			    "KeyName" : { "Ref" : "KeyName" },
+			    "InstanceType": "t2.small",
+			    "NetworkInterfaces": [ {
+			      "AssociatePublicIpAddress": "true",
+			      "DeviceIndex": "0",
+			      "GroupSet": [{ "Ref" : "InstanceSecurityGroup" }],
+			      "SubnetId": { "Ref" : "StudentSubnetPublic" }
+			    } ]
+  			}
+		},
+
+
+		"Ec2InstanceTest" : {
+			  "Type" : "AWS::EC2::Instance",
+			  "Condition" : "CreateTestResources",
+			  "Properties" : {
+			    "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },"PV64"]},
+			    "KeyName" : { "Ref" : "KeyName" },
+			    "InstanceType": "t2.micro",
+			    "NetworkInterfaces": [ {
+			      "AssociatePublicIpAddress": "true",
+			      "DeviceIndex": "0",
+			      "GroupSet": [{ "Ref" : "InstanceSecurityGroup" }],
+			      "SubnetId": { "Ref" : "StudentSubnetPublic" }
+			    } ]
+  			}
+		}
+
+	 },
+
+
+	 "Outputs" : {
+	    "InstanceIdTest" : {
+	      "Condition" : "CreateTestResources",
+	      "Description" : "InstanceId of the newly created EC2 instance",
+	      "Value" : { "Ref" : "Ec2InstanceTest" }
+	    },
+    
+	    "PublicIPTest" : {
+	      "Condition" : "CreateTestResources",
+	      "Description" : "Public IP address of the newly created EC2 instance",
+	      "Value" : { "Fn::GetAtt" : [ "Ec2InstanceTest", "PublicIp" ] }
+	    },
+
+
+	    "InstanceIdProd" : {
+	      "Condition" : "CreateProdResources",
+	      "Description" : "InstanceId of the newly created EC2 instance",
+	      "Value" : { "Ref" : "Ec2InstanceProd" }
+	    },
+    
+	    "PublicIPProd" : {
+	      "Condition" : "CreateProdResources",
+	      "Description" : "Public IP address of the newly created EC2 instance",
+	      "Value" : { "Fn::GetAtt" : [ "Ec2InstanceProd", "PublicIp" ] }
+	    }
+  	}
+
+}
