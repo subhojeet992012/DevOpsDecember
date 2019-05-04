@@ -27,10 +27,7 @@
 ```
 # vim /root/tomcat/conf/context.xml
      ### Add the following content to your file just before last line.
-<Resource name="jdbc/TestDB" auth="Container" type="javax.sql.DataSource"
-               maxTotal="100" maxIdle="30" maxWaitMillis="10000"
-               username="student" password="student@1" driverClassName="com.mysql.jdbc.Driver"
-               url="jdbc:mysql://10.128.0.6:3306/studentapp"/>
+<Resource name="jdbc/TestDB" auth="Container" type="javax.sql.DataSource" maxTotal="100" maxIdle="30" maxWaitMillis="10000" username="student" password="student@1" driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://10.128.0.6:3306/studentapp"/>
 
 ### Once changes are done then restart the tomcat
 # /root/tomcat/bin/shutdown.sh  (or)  # pkill java
