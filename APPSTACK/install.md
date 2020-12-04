@@ -120,6 +120,12 @@ worker.tomcatA.type=ajp13
 worker.tomcatA.host=10.128.0.5
 worker.tomcatA.port=8009
 
+# Goo installed tomcat directory and uncomment the ajp ports in server.xml.. Copy and paste the below lines in the server.xml
+<Connector protocol="AJP/1.3"
+               port="8009"
+               redirectPort="8443"
+               address="0.0.0.0" secretRequired="false" />  
+		
 # systemctl restart httpd
 
 ```
