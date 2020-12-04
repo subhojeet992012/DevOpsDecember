@@ -92,7 +92,7 @@ grant all privileges on studentapp.* to 'student'@'10.128.0.5' identified by 'st
 
 ```
 # cd /root
-# wget http://redrockdigimark.com/apachemirror/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.42-src.tar.gz
+# https://mirrors.estointernet.in/apache/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.48-src.tar.gzz
 # tar xf tomcat-connectors-1.2.42-src.tar.gz
 # cd tomcat-connectors-1.2.42-src/native
 # yum install gcc -y
